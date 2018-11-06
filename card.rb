@@ -1,7 +1,7 @@
 class Card
   SUITS = %w[♥   ♦   ♣   ♠ ]
   VALUES = ['Т', (2..10).to_a, %w[В Д К]].flatten
-  DECK = SUITS.map { |suit| VALUES.map { |v| "#{v}#{suit}" } }
+  DECK = SUITS.map { |suit| VALUES.map { |v| "#{v}#{suit}" } }.flatten.freeze
 
   attr_reader :name
 
