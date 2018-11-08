@@ -8,11 +8,12 @@ name = gets.chomp
 user = Player.new(name, autoplay: false)
 computer = Player.new('Computer')
 
-game = Game.new(user, computer)
-game.start
-
 loop do
-  game.show_status
-  game.do_step
-  break if game.stopped?
+  game = Game.new(user, computer)
+  game.play
+
+  puts 'Если хотите сыграть ещё, нажмите ENTER'
+  choice = gets.strip
+
+  break unless choice == ''
 end

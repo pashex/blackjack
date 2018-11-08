@@ -1,5 +1,5 @@
 class Card
-  SUITS = %w[♥   ♦   ♣   ♠ ]
+  SUITS = %w[♥ ♦ ♣ ♠].freeze
   VALUES = ['Т', (2..10).to_a, %w[В Д К]].flatten
   DECK = SUITS.map { |suit| VALUES.map { |v| "#{v}#{suit}" } }.flatten.freeze
 
@@ -20,6 +20,7 @@ class Card
   def base_points
     return 11 if ace?
     return 10 if pic?
+
     name[0..-2].to_i
   end
 
@@ -32,5 +33,4 @@ class Card
   def pic?
     %w[В Д К].include?(name[0])
   end
-
 end
