@@ -71,4 +71,20 @@ class Interface
   def show_step(player)
     show("Ход игрока #{player.name}", indent: true)
   end
+
+  def answer_user_menu(skip: true, add_card: true, stop: true)
+    show("Выш ход:", indent: true)
+    show('1. Пропустить ход') if skip
+    show('2. Добавить карту') if add_card
+    show('3. Открыть карты') if stop
+
+    choice = get_value
+    return 'skip' if choice == '1' && skip
+    return 'add_card' if choice == '2' && add_card
+    return 'stop' if choice == '3' && stop
+  end
+
+  def show_invalid_choice
+    show('Неверный выбор. Вводите значение согласно предложенному меню', indent: true)
+  end
 end

@@ -5,7 +5,7 @@ class Game
 
   def initialize(interface, *players)
     @players = players
-    @hands = @players.map { |p| Hand.new(p) }
+    @hands = @players.map { |p| Hand.new(interface, p) }
     @deck = Deck.new
     @interface = interface
     @money = 0.0

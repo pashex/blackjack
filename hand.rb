@@ -1,7 +1,8 @@
 class Hand
   attr_reader :player, :cards
 
-  def initialize(player)
+  def initialize(interface, player)
+    @interface = interface
     @player = player
     @cards = []
   end
@@ -35,6 +36,7 @@ class Hand
       loop do
         choice = manual_choice
         return choice if choice
+        @interface.show_invalid_choice
       end
     end
   end
@@ -57,14 +59,6 @@ class Hand
   end
 
   def manual_choice
-    puts 'Ваш ход:'
-    puts '1. Пропустить ход'
-    puts '2. Добавить карту' if can_add_card?
-    puts '3. Открыть карты'
-
-    choice = gets.chomp.to_i
-    return 'skip' if choice == 1
-    return 'add_card' if choice == 2 && can_add_card?
-    return 'stop' if choice == 3
+    @interface.answer_user_menu(add_card: can_add_card?)
   end
 end
