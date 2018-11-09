@@ -1,115 +1,102 @@
 class Game
   BET = 10.0
 
-  def initialize(*players)
+  attr_reader :interface
+
+  def initialize(interface, *players)
     @players = players
     @hands = @players.map { |p| Hand.new(p) }
     @deck = Deck.new
+    @interface = interface
     @money = 0.0
   end
 
   def play
     looser = @players.find { |p| p.money < BET }
-    return puts("У игрока #{looser.name} недостаточно денег для игры") if looser
+    return interface.show_player_not_enough_money(looser) if looser
 
     start
-    show_finance
     loop do
-      show_status
       step
       break if stopped?
     end
-    show_finance
   end
 
   private
 
   def start
-    puts 'Игра начата!'
+    interface.show_begin_game
     @deck.shuffle
 
     @hands.each do |hand|
-      puts "Игрок #{hand.player.name} получает 2 карты и платит в банк $#{BET}"
       hand.take_cards(@deck, 2)
+      interface.show_player_take_cards(hand.player, 2)
       hand.player.money -= BET
       @money += BET
+      interface.show_player_pay(hand.player, BET)
     end
 
+    interface.show_finance(@money, @players)
     @current_hand = @hands.first
   end
 
-  def show_finance
-    players_finance = @players.map { |p| "#{p.name} $#{p.money}" }.join('; ')
-    puts "В банке $#{@money}; #{players_finance}"
-  end
-
-  def show_status(closed: true)
-    puts
+  def status(closed: true)
     @hands.each do |hand|
-      cards_info = if closed && hand.autoplay?
-                     "Карты: #{'* ' * hand.cards.count}; Очки: Секрет"
-                   else
-                     "Карты: #{hand.cards.map(&:name).join(' ')} ; Очки: #{hand.points}"
-                   end
-      puts "У #{hand.player.name}: #{cards_info}"
+      interface.show_hand_info(hand, secret: closed && hand.autoplay?)
     end
   end
 
   def step
+    status
     return stop if should_end?
 
-    puts "\nХод #{@current_hand.player.name}"
+    interface.show_step(@current_hand.player)
     choice = @current_hand.step_choice
     send(choice.to_sym)
     @current_hand = @hands[@hands.index(@current_hand) + 1] || @hands.first
   end
 
   def skip
-    puts "Игрок #{@current_hand.player.name} пропускает ход"
+    interface.show_player_skip(@current_hand.player)
   end
 
   def add_card
-    puts "Игрок #{@current_hand.player.name} берёт 1 карту"
+    interface.show_player_take_cards(@current_hand.player, 1)
     @current_hand.take_cards(@deck, 1)
   end
 
-  def should_end?
-    @hands.all?(&:full?)
-  end
-
   def stop
-    puts "\nИгра окончена. Открываем карты"
-    show_status(closed: false)
+    interface.show_end_game
+    status(closed: false)
     award_winners
     drop_cards
-
-    puts "\nРезультаты игры:"
-    show_results
-  end
-
-  def stopped?
-    @money.zero?
   end
 
   def award_winners
     points = @hands.map { |hand| hand.points }
     max_points = points.select { |p| p <= 21 }.max
     @winners = @players.select.with_index { |_player, i| points[i] == max_points }
-    @winners.each { |player| player.money += @money / @winners.count }
-    @money = 0
-  end
+    interface.show_results(@winners, victory: @winners.count < @players.count)
 
-  def show_results
-    return if @winners.empty?
-
-    if @winners.count == @players.count
-      puts 'Ничья!'
-    else
-      puts "Победители: #{@winners.map(&:name).join(', ')}"
+    receive_money = @money / @winners.count
+    @winners.each do |player|
+      player.money += receive_money
+      interface.show_player_receive(player, receive_money)
     end
+    @money = 0
+
+    interface.show_finance(@money, @players)
   end
 
   def drop_cards
     @hands.each { |hand| hand.drop_cards(@deck) }
+  end
+
+  def should_end?
+    @hands.all?(&:full?)
+  end
+
+  def stopped?
+    @money.zero?
   end
 end
