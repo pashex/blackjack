@@ -41,11 +41,7 @@ class Hand
       sleep(5)
       autoplay_choice
     else
-      loop do
-        choice = manual_choice
-        return choice if choice
-        @interface.show_invalid_choice
-      end
+      manual_choice
     end
   end
 

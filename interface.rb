@@ -73,15 +73,18 @@ class Interface
   end
 
   def answer_user_menu(skip: true, add_card: true, stop: true)
-    show("Выш ход:", indent: true)
-    show('1. Пропустить ход') if skip
-    show('2. Добавить карту') if add_card
-    show('3. Открыть карты') if stop
+    loop do
+      show("Выш ход:", indent: true)
+      show('1. Пропустить ход') if skip
+      show('2. Добавить карту') if add_card
+      show('3. Открыть карты') if stop
 
-    choice = get_value
-    return 'skip' if choice == '1' && skip
-    return 'add_card' if choice == '2' && add_card
-    return 'stop' if choice == '3' && stop
+      choice = get_value
+      return 'skip' if choice == '1' && skip
+      return 'add_card' if choice == '2' && add_card
+      return 'stop' if choice == '3' && stop
+      show_invalid_choice
+    end
   end
 
   def show_invalid_choice
