@@ -1,10 +1,13 @@
 class Hand
+  MAX_SKIP_COUNT = 1
+
   attr_reader :player, :cards
 
   def initialize(interface, player)
     @interface = interface
     @player = player
     @cards = []
+    @skip_count = 0
   end
 
   def points
@@ -15,6 +18,10 @@ class Hand
     base_sum
   end
 
+  def skip
+    @skip_count += 1
+  end
+
   def take_cards(deck, count)
     count.times { cards << deck.pick_card }
   end
@@ -22,6 +29,7 @@ class Hand
   def drop_cards(deck)
     deck.return_cards(cards)
     cards = []
+    @skip_count = 0
   end
 
   def full?
@@ -51,14 +59,18 @@ class Hand
     cards.count < 3
   end
 
+  def can_skip?
+    @skip_count < MAX_SKIP_COUNT
+  end
+
   def autoplay_choice
-    return 'skip' if points >= 17
-    return 'add_card' if can_add_card?
+    return 'skip' if points >= 17 && can_skip?
+    return 'add_card' if points < 17 && can_add_card?
 
     'stop'
   end
 
   def manual_choice
-    @interface.answer_user_menu(add_card: can_add_card?)
+    @interface.answer_user_menu(skip: can_skip?, add_card: can_add_card?)
   end
 end

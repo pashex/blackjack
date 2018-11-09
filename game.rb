@@ -57,6 +57,7 @@ class Game
   end
 
   def skip
+    @current_hand.skip
     interface.show_player_skip(@current_hand.player)
   end
 
