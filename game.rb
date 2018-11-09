@@ -3,7 +3,8 @@ class Game
 
   def initialize(*players)
     @players = players
-    @deck = Card::DECK.map { |c_name| Card.new(c_name) }
+    @hands = @players.map { |p| Hand.new(p) }
+    @deck = Deck.new
     @money = 0.0
   end
 
@@ -25,16 +26,16 @@ class Game
 
   def start
     puts 'Игра начата!'
-    @deck.shuffle!
+    @deck.shuffle
 
-    @players.each do |player|
-      puts "Игрок #{player.name} получает 2 карты и платит в банк $#{BET}"
-      2.times { player.cards << pick_card }
-      player.money -= BET
+    @hands.each do |hand|
+      puts "Игрок #{hand.player.name} получает 2 карты и платит в банк $#{BET}"
+      hand.take_cards(@deck, 2)
+      hand.player.money -= BET
       @money += BET
     end
 
-    @current_player = @players.first
+    @current_hand = @hands.first
   end
 
   def show_finance
@@ -44,36 +45,36 @@ class Game
 
   def show_status(closed: true)
     puts
-    @players.each do |player|
-      cards_info = if closed && player.autoplay?
-                     "Карты: #{'* ' * player.cards.count}; Очки: Секрет"
+    @hands.each do |hand|
+      cards_info = if closed && hand.autoplay?
+                     "Карты: #{'* ' * hand.cards.count}; Очки: Секрет"
                    else
-                     "Карты: #{player.cards.map(&:name).join(' ')} ; Очки: #{player.points}"
+                     "Карты: #{hand.cards.map(&:name).join(' ')} ; Очки: #{hand.points}"
                    end
-      puts "У #{player.name}: #{cards_info}"
+      puts "У #{hand.player.name}: #{cards_info}"
     end
   end
 
   def step
     return stop if should_end?
 
-    puts "\nХод #{@current_player.name}"
-    choice = @current_player.step_choice
+    puts "\nХод #{@current_hand.player.name}"
+    choice = @current_hand.step_choice
     send(choice.to_sym)
-    @current_player = @players[@players.index(@current_player) + 1] || @players.first
+    @current_hand = @hands[@hands.index(@current_hand) + 1] || @hands.first
   end
 
   def skip
-    puts "Игрок #{@current_player.name} пропускает ход"
+    puts "Игрок #{@current_hand.player.name} пропускает ход"
   end
 
   def add_card
-    puts "Игрок #{@current_player.name} берёт 1 карту"
-    @current_player.cards << pick_card
+    puts "Игрок #{@current_hand.player.name} берёт 1 карту"
+    @current_hand.take_cards(@deck, 1)
   end
 
   def should_end?
-    @players.map(&:cards).all? { |cards| cards.count > 2 }
+    @hands.all?(&:full?)
   end
 
   def stop
@@ -90,12 +91,8 @@ class Game
     @money.zero?
   end
 
-  def pick_card
-    @deck.delete_at(0)
-  end
-
   def award_winners
-    points = @players.map { |player| Card.sum_points(player.cards) }
+    points = @hands.map { |hand| hand.points }
     max_points = points.select { |p| p <= 21 }.max
     @winners = @players.select.with_index { |_player, i| points[i] == max_points }
     @winners.each { |player| player.money += @money / @winners.count }
@@ -113,9 +110,6 @@ class Game
   end
 
   def drop_cards
-    @players.each do |player|
-      @deck += player.cards
-      player.cards = []
-    end
+    @hands.each { |hand| hand.drop_cards(@deck) }
   end
 end
