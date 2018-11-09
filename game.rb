@@ -68,16 +68,19 @@ class Game
   def stop
     interface.show_end_game
     status(closed: false)
+    choose_winners
     award_winners
     drop_cards
   end
 
-  def award_winners
+  def choose_winners
     points = @players.map { |player| player.hand.points }
     max_points = points.select { |p| p <= 21 }.max
     @winners = @players.select.with_index { |_player, i| points[i] == max_points }
     interface.show_results(@winners, victory: @winners.count < @players.count)
+  end
 
+  def award_winners
     receive_money = @money / @winners.count
     @winners.each do |player|
       player.money += receive_money

@@ -1,16 +1,7 @@
 class Interface
-  def show(string, indent: false)
-    puts if indent
-    puts string
-  end
-
-  def get_value
-    gets.strip
-  end
-
   def answer(question)
     show(question, indent: true)
-    get_value
+    input_value
   end
 
   def show_begin_game
@@ -22,7 +13,7 @@ class Interface
   end
 
   def show_results(winners, victory: true)
-    show("Результаты игры:", indent: true)
+    show('Результаты игры:', indent: true)
     if victory
       show("Победители: #{winners.map(&:name).join(', ')}")
     else
@@ -49,7 +40,7 @@ class Interface
   end
 
   def show_player_not_enough_money(player)
-    show_player_action(player, "не имеет достаточно средств для игры. Его баланс - $#{player.money}")
+    show_player_action(player, "не имеет средств для игры. Его баланс - $#{player.money}")
   end
 
   def show_player_skip(player)
@@ -74,20 +65,32 @@ class Interface
 
   def answer_user_menu(skip: true, add_card: true, stop: true)
     loop do
-      show("Выш ход:", indent: true)
+      show('Выш ход:', indent: true)
       show('1. Пропустить ход') if skip
       show('2. Добавить карту') if add_card
       show('3. Открыть карты') if stop
 
-      choice = get_value
+      choice = input_value
       return 'skip' if choice == '1' && skip
       return 'add_card' if choice == '2' && add_card
       return 'stop' if choice == '3' && stop
+
       show_invalid_choice
     end
   end
 
   def show_invalid_choice
     show('Неверный выбор. Вводите значение согласно предложенному меню', indent: true)
+  end
+
+  private
+
+  def show(string, indent: false)
+    puts if indent
+    puts string
+  end
+
+  def input_value
+    gets.strip
   end
 end

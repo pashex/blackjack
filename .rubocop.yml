@@ -26,3 +26,10 @@ Metrics/AbcSize:
 
 Style/GuardClause:
   Enabled: false
+
+Metrics/CyclomaticComplexity:
+  Max: 10
+
+Metrics/PerceivedComplexity:
+  Max: 10
+
