@@ -5,7 +5,6 @@ class Game
 
   def initialize(interface, *players)
     @players = players
-    @hands = @players.map { |p| Hand.new(interface, p) }
     @deck = Deck.new
     @interface = interface
     @money = 0.0
@@ -28,21 +27,21 @@ class Game
     interface.show_begin_game
     @deck.shuffle
 
-    @hands.each do |hand|
-      hand.take_cards(@deck, 2)
-      interface.show_player_take_cards(hand.player, 2)
-      hand.player.money -= BET
+    @players.each do |player|
+      player.hand.take_cards(@deck, 2)
+      interface.show_player_take_cards(player, 2)
+      player.money -= BET
       @money += BET
-      interface.show_player_pay(hand.player, BET)
+      interface.show_player_pay(player, BET)
     end
 
     interface.show_finance(@money, @players)
-    @current_hand = @hands.first
+    @current_player = @players.first
   end
 
   def status(closed: true)
-    @hands.each do |hand|
-      interface.show_hand_info(hand, secret: closed && hand.autoplay?)
+    @players.each do |player|
+      interface.show_hand_info(player, secret: closed && player.hand.is_a?(AutoHand))
     end
   end
 
@@ -50,20 +49,20 @@ class Game
     status
     return stop if should_end?
 
-    interface.show_step(@current_hand.player)
-    choice = @current_hand.step_choice
+    interface.show_step(@current_player)
+    choice = @current_player.hand.step_choice
     send(choice.to_sym)
-    @current_hand = @hands[@hands.index(@current_hand) + 1] || @hands.first
+    @current_player = @players[@players.index(@current_player) + 1] || @players.first
   end
 
   def skip
-    @current_hand.skip
-    interface.show_player_skip(@current_hand.player)
+    @current_player.hand.skip
+    interface.show_player_skip(@current_player)
   end
 
   def add_card
-    interface.show_player_take_cards(@current_hand.player, 1)
-    @current_hand.take_cards(@deck, 1)
+    interface.show_player_take_cards(@current_player, 1)
+    @current_player.hand.take_cards(@deck, 1)
   end
 
   def stop
@@ -74,7 +73,7 @@ class Game
   end
 
   def award_winners
-    points = @hands.map { |hand| hand.points }
+    points = @players.map { |player| player.hand.points }
     max_points = points.select { |p| p <= 21 }.max
     @winners = @players.select.with_index { |_player, i| points[i] == max_points }
     interface.show_results(@winners, victory: @winners.count < @players.count)
@@ -90,11 +89,11 @@ class Game
   end
 
   def drop_cards
-    @hands.each { |hand| hand.drop_cards(@deck) }
+    @players.each { |player| player.hand.drop_cards(@deck) }
   end
 
   def should_end?
-    @hands.all?(&:full?)
+    @players.map(&:hand).all?(&:full?)
   end
 
   def stopped?
