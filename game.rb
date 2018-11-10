@@ -5,6 +5,7 @@ class Game
 
   def initialize(interface, *players)
     @players = players
+    @players.each { |player| player.hand = Hand.new }
     @deck = Deck.new
     @interface = interface
     @money = 0.0
@@ -15,10 +16,10 @@ class Game
     return interface.show_player_not_enough_money(looser) if looser
 
     start
-    loop do
-      step
-      break if stopped?
+    @players.each do |player|
+      break if step(player) == 'stop'
     end
+    stop
   end
 
   private
@@ -36,33 +37,27 @@ class Game
     end
 
     interface.show_finance(@money, @players)
-    @current_player = @players.first
   end
 
   def status(closed: true)
     @players.each do |player|
-      interface.show_hand_info(player, secret: closed && player.hand.is_a?(AutoHand))
+      interface.show_hand_info(player, secret: closed && player.auto?)
     end
   end
 
-  def step
+  def step(player)
     status
-    return stop if should_end?
-
-    interface.show_step(@current_player)
-    choice = @current_player.hand.step_choice
-    send(choice.to_sym)
-    @current_player = @players[@players.index(@current_player) + 1] || @players.first
+    interface.show_step(player)
+    player.auto? ? auto_choice(player) : manual_choice(player)
   end
 
-  def skip
-    @current_player.hand.skip
-    interface.show_player_skip(@current_player)
+  def skip(player)
+    interface.show_player_skip(player)
   end
 
-  def add_card
-    interface.show_player_take_cards(@current_player, 1)
-    @current_player.hand.take_cards(@deck, 1)
+  def add_card(player)
+    interface.show_player_take_cards(player, 1)
+    player.hand.take_cards(@deck, 1)
   end
 
   def stop
@@ -95,11 +90,23 @@ class Game
     @players.each { |player| player.hand.drop_cards(@deck) }
   end
 
-  def should_end?
-    @players.map(&:hand).all?(&:full?)
+  def manual_choice(player)
+    loop do
+      choice = interface.answer_user_menu
+      case choice
+      when '1'
+        return skip(player)
+      when '2'
+        return add_card(player)
+      when '3'
+        return 'stop'
+      else
+        interface.show_invalid_choice
+      end
+    end
   end
 
-  def stopped?
-    @money.zero?
+  def auto_choice(player)
+    player.hand.points >= 17 ? skip(player) : add_card(player)
   end
 end

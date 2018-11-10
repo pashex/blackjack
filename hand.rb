@@ -1,11 +1,8 @@
 class Hand
-  MAX_SKIP_COUNT = 1
-
   attr_reader :cards
 
   def initialize
     @cards = []
-    @skip_count = 0
   end
 
   def points
@@ -16,10 +13,6 @@ class Hand
     base_sum
   end
 
-  def skip
-    @skip_count += 1
-  end
-
   def take_cards(deck, count)
     count.times { cards << deck.pick_card }
   end
@@ -27,20 +20,5 @@ class Hand
   def drop_cards(deck)
     deck.return_cards(cards)
     @cards = []
-    @skip_count = 0
-  end
-
-  def full?
-    cards.count > 2
-  end
-
-  private
-
-  def can_add_card?
-    cards.count < 3
-  end
-
-  def can_skip?
-    @skip_count < MAX_SKIP_COUNT
   end
 end

@@ -2,9 +2,13 @@ class Player
   DEFAULT_MONEY = 100.0
   attr_accessor :name, :money, :hand
 
-  def initialize(name, hand, money: DEFAULT_MONEY)
+  def initialize(name, auto: false, money: DEFAULT_MONEY)
     @name = name
-    @hand = hand
+    @auto = auto
     @money = money
+  end
+
+  def auto?
+    @auto
   end
 end
