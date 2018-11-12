@@ -5,16 +5,17 @@ require_relative 'hand.rb'
 require_relative 'deck.rb'
 require_relative 'game.rb'
 
-interface = Interface.new
-name = interface.answer('Имя игрока:')
+puts 'Имя игрока:'
+name = gets.strip
 
 user = Player.new(name)
 computer = Player.new('Computer', auto: true)
 
 loop do
-  game = Game.new(interface, user, computer)
+  game = Game.new(user, computer)
   game.play
 
-  choice = interface.answer('Если хотите сыграть ещё, нажмите ENTER. Выход - любой символ')
+  puts 'Если хотите сыграть ещё, нажмите ENTER. Выход - любой символ'
+  choice = gets.strip
   break unless choice == ''
 end

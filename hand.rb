@@ -1,8 +1,9 @@
 class Hand
-  attr_reader :cards
+  attr_reader :cards, :player
 
-  def initialize
+  def initialize(player)
     @cards = []
+    @player = player
   end
 
   def points
@@ -15,10 +16,5 @@ class Hand
 
   def take_cards(deck, count)
     count.times { cards << deck.pick_card }
-  end
-
-  def drop_cards(deck)
-    deck.return_cards(cards)
-    @cards = []
   end
 end

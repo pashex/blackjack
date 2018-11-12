@@ -15,8 +15,4 @@ class Deck
   def pick_card
     cards.delete_at(0)
   end
-
-  def return_cards(cards)
-    @cards += cards
-  end
 end
