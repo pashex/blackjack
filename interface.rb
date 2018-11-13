@@ -26,11 +26,11 @@ class Interface
     show("В банке $#{bank_money}; #{players_finance}", indent: true)
   end
 
-  def show_hand_info(player, secret: false)
+  def show_hand_info(player, cards, points, secret: false)
     cards_info = if secret
-                   "Карты: #{'* ' * player.hand.cards.count}; Очки: Секрет"
+                   "Карты: #{'* ' * cards.count}; Очки: Секрет"
                  else
-                   "Карты: #{player.hand.cards.map(&:name).join(' ')} ; Очки: #{player.hand.points}"
+                   "Карты: #{cards.map(&:name).join(' ')} ; Очки: #{points}"
                  end
     show("У #{player.name}: #{cards_info}")
   end
