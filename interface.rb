@@ -26,11 +26,11 @@ class Interface
     show("В банке $#{bank_money}; #{players_finance}", indent: true)
   end
 
-  def show_hand_info(player, secret: false)
+  def show_hand_info(player, cards, points, secret: false)
     cards_info = if secret
-                   "Карты: #{'* ' * player.hand.cards.count}; Очки: Секрет"
+                   "Карты: #{'* ' * cards.count}; Очки: Секрет"
                  else
-                   "Карты: #{player.hand.cards.map(&:name).join(' ')} ; Очки: #{player.hand.points}"
+                   "Карты: #{cards.map(&:name).join(' ')} ; Очки: #{points}"
                  end
     show("У #{player.name}: #{cards_info}")
   end
@@ -63,20 +63,13 @@ class Interface
     show("Ход игрока #{player.name}", indent: true)
   end
 
-  def answer_user_menu(skip: true, add_card: true, stop: true)
-    loop do
-      show('Выш ход:', indent: true)
-      show('1. Пропустить ход') if skip
-      show('2. Добавить карту') if add_card
-      show('3. Открыть карты') if stop
+  def answer_user_menu
+    show('Выш ход:', indent: true)
+    show('1. Пропустить ход')
+    show('2. Добавить карту')
+    show('3. Открыть карты')
 
-      choice = input_value
-      return 'skip' if choice == '1' && skip
-      return 'add_card' if choice == '2' && add_card
-      return 'stop' if choice == '3' && stop
-
-      show_invalid_choice
-    end
+    input_value
   end
 
   def show_invalid_choice

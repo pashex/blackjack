@@ -1,105 +1,124 @@
 class Game
   BET = 10.0
 
-  attr_reader :interface
-
-  def initialize(interface, *players)
+  def initialize(*players)
     @players = players
+    @hands = @players.map { |player| Hand.new(player) }
     @deck = Deck.new
-    @interface = interface
+    @interface = Interface.new
     @money = 0.0
+    @winners = []
   end
 
   def play
+    return if ended?
+
     looser = @players.find { |p| p.money < BET }
-    return interface.show_player_not_enough_money(looser) if looser
+    return @interface.show_player_not_enough_money(looser) if looser
 
     start
-    loop do
-      step
-      break if stopped?
+    @hands.each do |hand|
+      break if step(hand) == 'stop'
+    end
+    stop
+  end
+
+  def result
+    if ended?
+      status(closed: false)
+      @interface.show_results(@winners, victory: victory?)
     end
   end
 
   private
 
   def start
-    interface.show_begin_game
+    @interface.show_begin_game
     @deck.shuffle
 
-    @players.each do |player|
-      player.hand.take_cards(@deck, 2)
-      interface.show_player_take_cards(player, 2)
-      player.money -= BET
+    @hands.each do |hand|
+      hand.take_cards(@deck, 2)
+      @interface.show_player_take_cards(hand.player, 2)
+      hand.player.money -= BET
       @money += BET
-      interface.show_player_pay(player, BET)
+      @interface.show_player_pay(hand.player, BET)
     end
 
-    interface.show_finance(@money, @players)
-    @current_player = @players.first
+    @interface.show_finance(@money, @players)
   end
 
   def status(closed: true)
-    @players.each do |player|
-      interface.show_hand_info(player, secret: closed && player.hand.is_a?(AutoHand))
+    @hands.each do |hand|
+      @interface.show_hand_info(hand.player, hand.cards, hand.points,
+                                secret: closed && hand.player.auto?)
     end
   end
 
-  def step
+  def step(hand)
     status
-    return stop if should_end?
-
-    interface.show_step(@current_player)
-    choice = @current_player.hand.step_choice
-    send(choice.to_sym)
-    @current_player = @players[@players.index(@current_player) + 1] || @players.first
+    @interface.show_step(hand.player)
+    hand.player.auto? ? auto_choice(hand) : manual_choice(hand)
   end
 
-  def skip
-    @current_player.hand.skip
-    interface.show_player_skip(@current_player)
+  def skip(hand)
+    @interface.show_player_skip(hand.player)
   end
 
-  def add_card
-    interface.show_player_take_cards(@current_player, 1)
-    @current_player.hand.take_cards(@deck, 1)
+  def add_card(hand)
+    @interface.show_player_take_cards(hand.player, 1)
+    hand.take_cards(@deck, 1)
   end
 
   def stop
-    interface.show_end_game
+    @interface.show_end_game
     status(closed: false)
     choose_winners
     award_winners
-    drop_cards
   end
 
   def choose_winners
-    points = @players.map { |player| player.hand.points }
+    points = @hands.map { |hand| hand.points }
     max_points = points.select { |p| p <= 21 }.max
     @winners = @players.select.with_index { |_player, i| points[i] == max_points }
-    interface.show_results(@winners, victory: @winners.count < @players.count)
+    @interface.show_results(@winners, victory: victory?)
   end
 
   def award_winners
     receive_money = @money / @winners.count
     @winners.each do |player|
       player.money += receive_money
-      interface.show_player_receive(player, receive_money)
+      @interface.show_player_receive(player, receive_money)
     end
     @money = 0
 
-    interface.show_finance(@money, @players)
+    @interface.show_finance(@money, @players)
   end
 
-  def drop_cards
-    @players.each { |player| player.hand.drop_cards(@deck) }
+  def manual_choice(hand)
+    loop do
+      choice = @interface.answer_user_menu
+      case choice
+      when '1'
+        return skip(hand)
+      when '2'
+        return add_card(hand)
+      when '3'
+        return 'stop'
+      else
+        @interface.show_invalid_choice
+      end
+    end
   end
 
-  def should_end?
-    @players.map(&:hand).all?(&:full?)
+  def auto_choice(hand)
+    hand.points >= 17 ? skip(hand) : add_card(hand)
   end
 
-  def stopped?
-    @money.zero?
+  def ended?
+    @winners.any?
+  end
+
+  def victory?
+    @winners.count < @players.count
   end
 end
